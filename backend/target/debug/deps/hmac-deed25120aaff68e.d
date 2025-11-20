@@ -1,0 +1,9 @@
+/Volumes/Nexus/DevProyjects/SoundScapeLib/backend/target/debug/deps/hmac-deed25120aaff68e.d: /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/lib.rs /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/optim.rs /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/simple.rs
+
+/Volumes/Nexus/DevProyjects/SoundScapeLib/backend/target/debug/deps/libhmac-deed25120aaff68e.rlib: /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/lib.rs /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/optim.rs /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/simple.rs
+
+/Volumes/Nexus/DevProyjects/SoundScapeLib/backend/target/debug/deps/libhmac-deed25120aaff68e.rmeta: /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/lib.rs /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/optim.rs /Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/simple.rs
+
+/Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/lib.rs:
+/Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/optim.rs:
+/Users/sdcarr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hmac-0.12.1/src/simple.rs:

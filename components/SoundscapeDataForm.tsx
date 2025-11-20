@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SoundscapeSession } from '../types';
+import { uploadFile } from '../services/storage';
 
 // The data structure the form will manage and submit
 export interface SessionFormData {
@@ -8,6 +9,8 @@ export interface SessionFormData {
   project: string;
   description: string;
   locationName: string;
+  locationLat?: number;
+  locationLng?: number;
   imageUrl: string;
   audioUrl: string;
   equipment: string;
@@ -26,177 +29,325 @@ interface SoundscapeDataFormProps {
   defaultProject?: string | null;
 }
 
-const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({ onSubmit, onCancel, initialDataFromAI, projects, isEditing, defaultProject }) => {
+const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
+  onSubmit,
+  onCancel,
+  initialDataFromAI,
+  projects,
+  isEditing,
+  defaultProject
+}) => {
   const [formData, setFormData] = useState<SessionFormData>({
     title: '',
     author: '',
     project: defaultProject || '',
     description: '',
     locationName: '',
+    locationLat: undefined,
+    locationLng: undefined,
     imageUrl: '',
     audioUrl: '',
     equipment: '',
-    soundType: 'Forest',
+    soundType: '',
     date: new Date().toISOString().split('T')[0],
+    imageFile: undefined,
+    audioFile: undefined,
   });
-  
-  // State for previewing files
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [audioFileName, setAudioFileName] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialDataFromAI) {
-      // If a default project is passed, it takes precedence over AI-generated project
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         ...initialDataFromAI,
-        project: defaultProject || initialDataFromAI.project,
-      });
-
-      if(initialDataFromAI.imageFile) {
-        setImagePreview(URL.createObjectURL(initialDataFromAI.imageFile));
-      } else if (initialDataFromAI.imageUrl) {
-        setImagePreview(initialDataFromAI.imageUrl);
-      }
-      
-      if(initialDataFromAI.audioFile) {
-        setAudioFileName(initialDataFromAI.audioFile.name);
-      } else if (initialDataFromAI.audioUrl) {
-         setAudioFileName(initialDataFromAI.audioUrl.split('/').pop() || 'Existing Audio');
-      }
+        project: initialDataFromAI.project || defaultProject || prev.project
+      }));
     }
-    
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
   }, [initialDataFromAI, defaultProject]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target;
-    if (files && files[0]) {
-      const file = files[0];
-      if (name === 'imageFile') {
-        setFormData(prev => ({ ...prev, imageFile: file, imageUrl: file.name }));
-        
-        if (imagePreview && imagePreview.startsWith('blob:')) {
-          URL.revokeObjectURL(imagePreview);
-        }
-        setImagePreview(URL.createObjectURL(file));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+    setIsSubmitting(true);
 
-      } else if (name === 'audioFile') {
-        setFormData(prev => ({ ...prev, audioFile: file, audioUrl: file.name }));
-        setAudioFileName(file.name);
+    let audioUrl = formData.audioUrl;
+    let imageUrl = formData.imageUrl;
+
+    try {
+      if (formData.audioFile) {
+        try {
+          const { url } = await uploadFile(
+            formData.audioFile,
+            `uploads/audio/${Date.now()}-${formData.audioFile.name}`,
+            { kind: 'audio' }
+          );
+          audioUrl = url;
+        } catch (err) {
+          console.warn('Audio upload failed, using local preview URL', err);
+          if (!audioUrl) {
+            audioUrl = URL.createObjectURL(formData.audioFile);
+          }
+          setSubmitError('No se pudo subir el audio a Storage; se usará la URL local.');
+        }
       }
+
+      if (formData.imageFile) {
+        try {
+          const { url } = await uploadFile(
+            formData.imageFile,
+            `uploads/images/${Date.now()}-${formData.imageFile.name}`,
+            { kind: 'image' }
+          );
+          imageUrl = url;
+        } catch (err) {
+          console.warn('Image upload failed, using local preview URL', err);
+          if (!imageUrl) {
+            imageUrl = URL.createObjectURL(formData.imageFile);
+          }
+          setSubmitError('No se pudo subir la imagen a Storage; se usará la URL local.');
+        }
+      }
+
+      onSubmit({
+        ...formData,
+        audioUrl,
+        imageUrl,
+      });
+    } catch (err) {
+      console.error('Submit error', err);
+      setSubmitError('No se pudo guardar el soundscape. Intenta de nuevo.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
+
+  const handleChange = (field: keyof SessionFormData, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const inputClass = "w-full bg-slate-800 border border-slate-600 rounded-md p-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition disabled:bg-slate-700 disabled:cursor-not-allowed";
-  const labelClass = "block text-sm font-medium text-slate-400 mb-1";
-  const fileInputClass = "block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-500 file:text-white hover:file:bg-cyan-400 transition-colors";
-
-
   return (
-    <div className="max-w-3xl mx-auto animate-fade-in w-full">
-        <h2 className="text-3xl font-bold text-white mb-6">{isEditing ? 'Edit Soundscape' : 'Review & Confirm Details'}</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label htmlFor="title" className={labelClass}>Title</label>
-                    <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className={inputClass} required />
-                </div>
-                 <div>
-                    <label htmlFor="author" className={labelClass}>Author</label>
-                    <input type="text" id="author" name="author" value={formData.author} onChange={handleChange} className={inputClass} required />
-                </div>
-            </div>
-             <div>
-                <label htmlFor="project" className={labelClass}>Project</label>
-                <input 
-                    type="text" 
-                    id="project" 
-                    name="project" 
-                    list="project-list" 
-                    value={formData.project} 
-                    onChange={handleChange} 
-                    className={inputClass} 
-                    required 
-                    placeholder="e.g., Nature Field Recordings"
-                    disabled={!!defaultProject}
-                    readOnly={!!defaultProject}
-                />
-                <datalist id="project-list">
-                    {projects.map(p => <option key={p} value={p} />)}
-                </datalist>
-            </div>
-            <div>
-                <label htmlFor="description" className={labelClass}>Description</label>
-                <textarea id="description" name="description" value={formData.description} onChange={handleChange} className={inputClass} rows={4} required />
-            </div>
-            <div>
-                <label htmlFor="locationName" className={labelClass}>Location Name</label>
-                <input type="text" id="locationName" name="locationName" value={formData.locationName} onChange={handleChange} className={inputClass} required />
-            </div>
-            
-            <div>
-              <label htmlFor="imageFile" className={labelClass}>Image</label>
-              <input type="file" id="imageFile" name="imageFile" onChange={handleFileChange} className={fileInputClass} accept="image/*" />
-              {imagePreview && (
-                <div className="mt-4">
-                  <p className="text-sm text-slate-400 mb-2">Image Preview:</p>
-                  <img src={imagePreview} alt="Selected preview" className="rounded-lg max-h-48 w-auto object-cover"/>
-                </div>
-              )}
-            </div>
-            
-            <div>
-                <label htmlFor="audioFile" className={labelClass}>Audio</label>
-                <input type="file" id="audioFile" name="audioFile" onChange={handleFileChange} className={fileInputClass} accept="audio/*" />
-                {audioFileName && (
-                  <p className="text-sm text-slate-400 mt-2">Selected audio: <span className="font-medium text-slate-300">{audioFileName}</span></p>
-                )}
-            </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-3xl font-bold text-white mb-6 text-center">
+        {isEditing ? 'Editar Soundscape' : 'Nuevo Soundscape'}
+      </h2>
 
-             <div>
-                <label htmlFor="equipment" className={labelClass}>Equipment Used</label>
-                <input type="text" id="equipment" name="equipment" value={formData.equipment} onChange={handleChange} className={inputClass} required />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div>
-                    <label htmlFor="soundType" className={labelClass}>Sound Type</label>
-                    <select id="soundType" name="soundType" value={formData.soundType} onChange={handleChange} className={inputClass} required>
-                        <option>Forest</option>
-                        <option>Urban</option>
-                        <option>Marine</option>
-                        <option>Desert</option>
-                        <option>Industrial</option>
-                    </select>
-                </div>
-                 <div>
-                    <label htmlFor="date" className={labelClass}>Date Recorded</label>
-                    <input type="date" id="date" name="date" value={formData.date} onChange={handleChange} className={inputClass} required />
-                </div>
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {submitError && (
+          <div className="p-3 rounded-md bg-red-900/40 border border-red-800 text-red-200 text-sm">
+            {submitError}
+          </div>
+        )}
 
-            <div className="flex justify-end gap-4 pt-4">
-                <button type="button" onClick={onCancel} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                    Cancel
-                </button>
-                <button type="submit" className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                    {isEditing ? 'Save Changes' : 'Create Soundscape'}
-                </button>
-            </div>
-        </form>
+        {/* Título y Autor */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              📝 Título
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Título del soundscape"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              👤 Autor
+            </label>
+            <input
+              type="text"
+              value={formData.author}
+              onChange={(e) => handleChange('author', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nombre del autor"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Proyecto */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            📁 Proyecto
+          </label>
+          <select
+            value={formData.project}
+            onChange={(e) => handleChange('project', e.target.value)}
+            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Seleccionar proyecto</option>
+            {projects.map((project) => (
+              <option key={project} value={project}>
+                {project}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Descripción */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            📖 Descripción
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            rows={4}
+            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Descripción detallada del soundscape"
+            required
+          />
+        </div>
+
+        {/* Ubicación */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              📍 Ubicación
+            </label>
+            <input
+              type="text"
+              value={formData.locationName}
+              onChange={(e) => handleChange('locationName', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Bosque de La Granja"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              🌐 Latitud
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={formData.locationLat || ''}
+              onChange={(e) => handleChange('locationLat', parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="40.4168"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              🌐 Longitud
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={formData.locationLng || ''}
+              onChange={(e) => handleChange('locationLng', parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="-3.7038"
+            />
+          </div>
+        </div>
+
+        {/* Tipo de Sonido y Equipamiento */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              🎵 Tipo de Sonido
+            </label>
+            <select
+              value={formData.soundType}
+              onChange={(e) => handleChange('soundType', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Seleccionar tipo</option>
+              <option value="Forest">🌲 Bosque</option>
+              <option value="Urban">🏙️ Urbano</option>
+              <option value="Marine">🌊 Marino</option>
+              <option value="Desert">🏜️ Desierto</option>
+              <option value="Industrial">🏭 Industrial</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              🎙️ Equipamiento
+            </label>
+            <input
+              type="text"
+              value={formData.equipment}
+              onChange={(e) => handleChange('equipment', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ej: Zoom H5, Audio-Technica AT875R"
+            />
+          </div>
+        </div>
+
+        {/* URLs y Fecha */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              🎵 Audio URL <span className="text-slate-500 font-normal">(opcional; se autocompleta si subes archivo)</span>
+            </label>
+            <input
+              type="text"
+              value={formData.audioUrl}
+              onChange={(e) => handleChange('audioUrl', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Se completará con la subida a Storage o deja vacío"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              📷 Imagen URL <span className="text-slate-500 font-normal">(opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={formData.imageUrl}
+              onChange={(e) => handleChange('imageUrl', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Se completará con la subida a Storage o deja vacío"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              📅 Fecha
+            </label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => handleChange('date', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Botones */}
+        <div className="flex gap-3 pt-6">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-all duration-200"
+          >
+            {isSubmitting ? 'Subiendo...' : `💾 ${isEditing ? 'Actualizar' : 'Guardar'} Soundscape`}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition-colors duration-200"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

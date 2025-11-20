@@ -10,7 +10,7 @@ export const uploadFile = async (
     path: string, 
     metadata: { [key: string]: string | number } = {}
 ): Promise<{ url: string; storagePath: string }> => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
+    const userId = auth.currentUser?.uid || 'anonymous';
 
     const storageRef = ref(storage, path);
     
@@ -23,7 +23,7 @@ export const uploadFile = async (
     const uploadResult = await uploadBytes(storageRef, blob, {
         customMetadata: {
             ...customMetadata,
-            userId: auth.currentUser.uid
+            userId
         },
         contentType: blob.type
     });

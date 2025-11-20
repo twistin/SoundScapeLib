@@ -5,18 +5,16 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
-// For development/demo purposes, we can use placeholders or assume env vars
-// In a real app, these would be process.env.REACT_APP_FIREBASE_...
+// Use Vite env variables (prefixed with VITE_) for Firebase credentials
 const firebaseConfig = {
-  apiKey: process.env.API_KEY || "mock_key", 
-  authDomain: "soundscape-app.firebaseapp.com",
-  projectId: "soundscape-app",
-  storageBucket: "soundscape-app.firebasestorage.app",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'dev-key',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'localhost',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'local-project',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'local-bucket',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '000000000000',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || 'local-app-id'
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

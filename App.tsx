@@ -115,6 +115,8 @@ function App() {
   
   const handleFormSubmit = (formData: SessionFormData) => {
     if (formInitialData) { // Editing existing session
+      const imageUrl = formData.imageUrl || (formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl);
+      const audioUrl = formData.audioUrl || (formData.audioFile ? URL.createObjectURL(formData.audioFile) : formData.audioUrl);
       const updatedSession: SoundscapeSession = {
         ...formInitialData,
         title: formData.title,
@@ -129,13 +131,15 @@ function App() {
           lat: formInitialData.location.lat,
           lng: formInitialData.location.lng,
         },
-        imageUrl: formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl,
-        audioUrl: formData.audioFile ? URL.createObjectURL(formData.audioFile) : formData.audioUrl,
+        imageUrl,
+        audioUrl,
       };
       setSessions(prev => prev.map(s => s.id === updatedSession.id ? updatedSession : s));
       setSelectedSession(updatedSession);
       setView('detail');
     } else { // Creating new session
+      const imageUrl = formData.imageUrl || (formData.imageFile ? URL.createObjectURL(formData.imageFile) : 'https://picsum.photos/seed/new/800/600');
+      const audioUrl = formData.audioUrl || (formData.audioFile ? URL.createObjectURL(formData.audioFile) : '');
       const newSession: SoundscapeSession = {
         id: new Date().getTime().toString(),
         title: formData.title,
@@ -150,8 +154,8 @@ function App() {
           lat: 40.7128 + (Math.random() - 0.5) * 10,
           lng: -74.0060 + (Math.random() - 0.5) * 10,
         },
-        imageUrl: formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl || 'https://picsum.photos/seed/new/800/600',
-        audioUrl: formData.audioFile ? URL.createObjectURL(formData.audioFile) : formData.audioUrl || '',
+        imageUrl,
+        audioUrl,
         attachments: [],
         privacy: 'private'
       };

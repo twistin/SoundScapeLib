@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test AI Integration</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1e293b; color: white; }
+        button { background: #06b6d4; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0891b2; }
+        #result { margin-top: 20px; background: #374151; padding: 15px; border-radius: 5px; }
+        #error { color: #ef4444; }
+        .success { color: #22c55e; }
+    </style>
+</head>
+<body>
+    <h1>🎵 SoundScape AI Integration Test</h1>
+    
+    <p>Test the AI generation endpoint that should be working in your app:</p>
+    
+    <input type="text" id="description" placeholder="Describe your soundscape..." 
+           value="Morning birds singing in a peaceful forest" 
+           style="width: 400px; padding: 8px; margin: 10px 0;">
+    
+    <br>
+    
+    <button onclick="testAI()">🪄 Test Generate with AI</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testAI() {
+            const description = document.getElementById('description').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<p>🔄 Generating...</p>';
+            
+            try {
+                console.log('Calling backend at http://localhost:8080/api/v1/ai/generate-metadata');
+                
+                const response = await fetch('http://localhost:8080/api/v1/ai/generate-metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        description: description.trim()
+                    }),
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'AI generation failed');
+                }
+                
+                const aiResponse = data.data;
+                
+                resultDiv.innerHTML = `
+                    <h3 class="success">✅ AI Generation Success!</h3>
+                    <p><strong>Title:</strong> ${aiResponse.title}</p>
+                    <p><strong>Description:</strong> ${aiResponse.description}</p>
+                    <p><strong>Tags:</strong> ${aiResponse.tags.join(', ')}</p>
+                    <p><strong>Atmosphere:</strong> ${aiResponse.atmosphere_keywords.join(', ')}</p>
+                    <p><em>This is the same data that should appear in your SoundScape app!</em></p>
+                `;
+                
+            } catch (error) {
+                console.error('AI Generation error:', error);
+                resultDiv.innerHTML = `
+                    <h3 id="error">❌ Error</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>Check the browser console for more details.</p>
+                    <p>Make sure backend is running at http://localhost:8080</p>
+                `;
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', () => {
+            console.log('Testing AI integration...');
+            
+            // Test backend connection first
+            fetch('http://localhost:8080/api/v1/health')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('✅ Backend health check:', data);
+                })
+                .catch(error => {
+                    console.error('❌ Backend health check failed:', error);
+                });
+        });
+    </script>
+</body>
+</html>
