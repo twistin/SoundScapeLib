@@ -13,22 +13,37 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onSelect }) => {
   return (
     <div
-      className="bg-slate-800 rounded-lg p-6 shadow-lg cursor-pointer group transform hover:-translate-y-2 transition-transform duration-300 ease-in-out flex flex-col items-start"
+      className="glass-card rounded-xl p-6 shadow-lg cursor-pointer group flex flex-col items-start justify-between h-48 relative overflow-hidden"
       onClick={() => onSelect(project.name)}
     >
-        <div className="flex justify-between items-start w-full mb-4">
-            <FolderIcon className="w-12 h-12 text-cyan-500 group-hover:text-cyan-400 transition-colors" />
+        {/* Decorative background blob */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-colors duration-500"></div>
+
+        <div className="flex justify-between items-start w-full z-10">
+            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 group-hover:border-cyan-500/50 group-hover:bg-cyan-900/20 transition-colors">
+                 <FolderIcon className="w-8 h-8 text-cyan-500 group-hover:text-cyan-400 transition-colors" />
+            </div>
             {project.owner && (
-                 <img 
-                    src={project.owner.avatarUrl} 
-                    alt={project.owner.name} 
-                    title={`Owner: ${project.owner.name}`}
-                    className="w-10 h-10 rounded-full border-2 border-slate-600 group-hover:border-cyan-400 transition-colors"
-                />
+                 <div className="relative">
+                     <img 
+                        src={project.owner.avatarUrl} 
+                        alt={project.owner.name} 
+                        title={`Owner: ${project.owner.name}`}
+                        className="w-8 h-8 rounded-full border border-slate-600 group-hover:border-cyan-400 transition-colors shadow-sm"
+                    />
+                 </div>
             )}
         </div>
-      <h3 className="text-xl font-bold text-white mb-1 truncate w-full" title={project.name}>{project.name}</h3>
-      <p className="text-sm text-slate-400">{project.count} {project.count === 1 ? 'item' : 'items'}</p>
+      
+      <div className="w-full z-10">
+        <h3 className="text-xl font-bold text-white mb-1 truncate w-full group-hover:text-cyan-400 transition-colors" title={project.name}>
+            {project.name}
+        </h3>
+        <div className="flex items-center gap-2 text-sm text-slate-400 group-hover:text-slate-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-cyan-400 transition-colors"></span>
+            {project.count} {project.count === 1 ? 'soundscape' : 'soundscapes'}
+        </div>
+      </div>
     </div>
   );
 };

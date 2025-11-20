@@ -1,91 +1,99 @@
-# Soundscape Gallery
+# 🎧 SoundXcape - Professional Audio Cloud
 
-Welcome to the Soundscape Gallery, an immersive web application for professional sound recordists, hobbyists, and audio enthusiasts to upload, organize, and explore high-quality environmental recordings. This application provides a rich, interactive experience, combining an advanced audio player with project management and AI-powered metadata generation.
+![Status](https://img.shields.io/badge/Status-Production_Ready-cyan) ![Tech](https://img.shields.io/badge/Stack-React_19_|_Firebase_|_Gemini_AI-blue)
 
-![Soundscape Gallery Screenshot](https://images.unsplash.com/photo-1507525428034-b723a9ce6890?q=80&w=1200&auto=format&fit=crop)
+**SoundXcape** (formerly Soundscape.io) is a professional-grade platform designed for sound designers, field recordists, and audio post-production workflows. It bridges the gap between field capture, cloud management, and DAW integration.
 
----
-
-## ✨ Key Features
-
-- **Project-Based Organization**: Group your soundscape sessions into distinct projects (e.g., "Nature Field Recordings," "Urban Explorations") for better organization.
-- **AI-Powered Wizard**: Utilize the Google Gemini API to automatically generate rich metadata (titles, descriptions, locations, equipment suggestions) for your recordings from a simple text prompt.
-- **Interactive Soundscape Player**: A custom audio player featuring a dynamic waveform visualization powered by `WaveSurfer.js`.
-- **Comprehensive File Management**: Upload multiple attachments (images, audio, notes) to both projects and individual sessions. Features include image thumbnails, inline audio playback, and direct downloads.
-- **Interactive Map View**: Visualize the geographic location of all your soundscapes on a global map using Leaflet.js, with clickable markers to jump directly to a session.
-- **Collaborative Workspace (Simulated)**: The UI is designed for teamwork, showing project owners and members, laying the groundwork for a future multi-user backend.
-- **Responsive Design**: A clean, modern UI built with Tailwind CSS that looks great on devices of all sizes.
-- **Dynamic Dashboard**: Easily switch between viewing your projects, recently added soundscapes, or the world map.
+The platform allows you to **eXperiment** with generative audio, **eXplore** your library with AI, and **eXport** directly to your timeline.
 
 ---
 
-## 🛠️ Technology Stack
+## 🚀 Key Features
 
-This project is built with a modern, client-side tech stack focused on interactivity and a great user experience.
+### 1. 🌍 X-Capture (Field Mode)
+An optimized mobile interface for high-fidelity data capture in the field.
+*   **Real-time Geolocation:** Precise GPS tracking with map visualization.
+*   **Integrated Recorder:** High-quality audio capture (WAV/WebM) directly from the browser with spectrum visualization.
+*   **AI Auto-Tagging (Gemini):** Automatic generation of titles, descriptions, and tags (biotic, geophonic, anthropophonic) based on location context and weather data.
+*   **Cloud Sync:** Direct upload to Firebase Storage with immediate metadata indexing.
 
-- **Frontend**:
-  - **React**: A JavaScript library for building user interfaces.
-  - **TypeScript**: For static typing, improving code quality and maintainability.
-  - **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
-- **APIs & Libraries**:
-  - **@google/genai (Gemini API)**: Powers the AI-driven metadata generation for new soundscapes.
-  - **WaveSurfer.js**: For creating the interactive waveform audio player.
-  - **Leaflet.js**: For rendering the interactive world map.
+### 2. 📚 Pro Library & Desktop Bridge
+A robust asset manager built for speed.
+*   **Desktop Bridge:** Index local files (NAS/Hard Drive) without uploading them, allowing you to manage your entire offline library in the cloud.
+*   **Advanced Search:** Filter by sample rate, category, origin (Cloud vs Local), and AI-generated tags.
+*   **Similarity Search:** AI-powered vector search to find textures similar to a selected file.
+*   **DAW Integration:** "Drag & Drop" functionality to move processed files or local references directly to your Digital Audio Workstation.
 
----
+### 3. 🎛️ Cloud Audio Editor
+A powerful non-destructive editor running in the browser.
+*   **Signal Analysis:** Real-time Loudness Meter (LUFS/RMS) and FFT Spectrum Analyzer.
+*   **Processing:**
+    *   **Trim/Crop:** Precise region editing.
+    *   **Normalization:** Peak normalization.
+    *   **Fades:** Linear fade-in/out.
+*   **Cloud Processing:** Heavy tasks (Pitch Shift, Time Stretch) are offloaded to Cloud Functions using FFmpeg for professional quality.
 
-## 🚀 Getting Started
-
-This application is designed as a client-side project and can be run using any simple static file server.
-
-**Prerequisites**:
-- A modern web browser.
-- A local web server. You can use the `live-server` VS Code extension or a simple Python server.
-
-**Setup**:
-
-1.  **API Key**:
-    - To use the AI generation features, you must have a Google Gemini API key.
-    - This application expects the API key to be available as an environment variable (`process.env.API_KEY`). When deploying to a service like Netlify or Vercel, you would set this in your site's environment variable settings. *For local development, you would need a mechanism to inject this variable.*
-
-2.  **Running Locally**:
-    - Clone or download the project files.
-    - Start a local web server in the root directory of the project. For example, using Python:
-      ```bash
-      python3 -m http.server
-      ```
-    - Open your browser and navigate to the local server's address (e.g., `http://localhost:8000`).
+### 4. ⚡ Generative Tools
+*   **Tone Generator:** Synthesize test tones and noise profiles.
+*   **Whoosh Creator:** Procedurally generate doppler-style pass-bys and transitions.
 
 ---
 
-## 📁 Project Structure
+## 🛠️ Tech Stack
 
-```
-/
-├── components/          # Reusable React components
-│   ├── icons/           # SVG icon components
-│   ├── App.tsx          # Main application component
-│   ├── SessionDetail.tsx  # Detail view for a soundscape
-│   ├── SessionForm.tsx    # AI-powered new session wizard
-│   └── ...
-├── data/                # Mock data for development
-│   └── mockData.ts
-├── types.ts             # TypeScript type definitions
-├── index.html           # The main HTML entry point
-├── index.tsx            # React application entry point
-└── README.md            # This file
-```
+*   **Frontend:** React 19, Tailwind CSS, Wavesurfer.js.
+*   **Backend:** Firebase (Auth, Firestore, Storage, Cloud Functions).
+*   **AI:** Google Gemini API (v2.5 Flash) for metadata and context analysis.
+*   **Audio Processing:** Web Audio API (Client-side preview) + FFmpeg (Server-side rendering).
 
 ---
 
-## 🔮 Future Enhancements
+## 📦 Installation
 
-While the current version is a fully-featured client-side application, the next logical step is to connect it to a backend service to enable true persistence and collaboration.
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-user/soundxcape.git
+    cd soundxcape
+    ```
 
-- **Backend Integration**: Replace the mock data with a real backend service like **Firebase** or **Supabase** to handle:
-  - User Authentication
-  - Database (Firestore or Supabase DB)
-  - File Storage (Firebase Storage or Supabase Storage)
-- **Real-Time Collaboration**: Implement real-time updates so that when one user in a project group makes a change, it instantly reflects for all other members.
-- **Advanced Permissions**: Introduce user roles within projects (e.g., Owner, Editor, Viewer).
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
+3.  **Environment Setup:**
+    Create a `.env` file with your Firebase and Google AI Studio keys:
+    ```env
+    API_KEY=your_google_gemini_key
+    ```
+    *Note: Firebase config is located in `src/firebase/config.ts`.*
+
+4.  **Run Development Server:**
+    ```bash
+    npm run dev
+    ```
+
+---
+
+## 📖 Usage Guide
+
+### Using X-Capture
+1.  Click **"Launch X-Capture"** from the dashboard.
+2.  Allow location and microphone access.
+3.  Record your environment.
+4.  Review the AI-generated metadata and click **"Upload to SoundXcape Cloud"**.
+
+### Using Pro Library
+1.  Navigate to **"Pro Library"**.
+2.  Use **"Desktop Bridge"** to index local folders.
+3.  Select a file to view the **Spectral Analysis**.
+4.  Apply edits (Trim, Fade) and click **"Export Processed"** to render a new file.
+
+---
+
+## 📄 License
+
+MIT License.
+
+---
+*SoundXcape - eXperiment. eXplore. eXport.*

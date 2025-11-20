@@ -59,7 +59,7 @@ export interface SoundscapeSession {
 export interface AudioFile {
   id: string;
   filename: string;
-  path: string; // Local path simulation
+  path: string; // Local path simulation or Storage Path
   url: string;
   description: string;
   category: string;
@@ -77,7 +77,7 @@ export interface AudioFile {
 
   // AI Status
   aiStatus?: 'PENDING' | 'COMPLETED' | 'FAILED';
-
+  
   // Processing State (Pre-Edit)
   processing?: {
     pitch: number; // Semitones +/-

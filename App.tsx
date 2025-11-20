@@ -19,8 +19,12 @@ import Modal from './components/Modal';
 import FileManager from './components/FileManager';
 import NewProjectCard from './components/NewProjectCard';
 import UsersIcon from './components/icons/UsersIcon';
+import FieldMode from './components/FieldMode'; 
+import MicrophoneIcon from './components/icons/MicrophoneIcon'; 
+import LibraryMode from './components/LibraryMode'; // New Import
+import WaveformIcon from './components/icons/WaveformIcon'; // New Import
 
-type View = 'landing' | 'dashboard' | 'detail' | 'form';
+type View = 'landing' | 'dashboard' | 'detail' | 'form' | 'field' | 'library'; // Added library
 type DashboardTab = 'projects' | 'recents' | 'map';
 
 // Simulate a logged-in user
@@ -149,9 +153,9 @@ function App() {
         imageUrl: formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl || 'https://picsum.photos/seed/new/800/600',
         audioUrl: formData.audioFile ? URL.createObjectURL(formData.audioFile) : formData.audioUrl || '',
         attachments: [],
+        privacy: 'private'
       };
       setSessions(prev => [newSession, ...prev]);
-      // If a project with this name doesn't exist, create it.
       if (!projects.some(p => p.name === newSession.project)) {
          const newProject: Project = {
             name: newSession.project,
@@ -168,6 +172,21 @@ function App() {
     setDefaultProjectForNewSession(null);
   };
   
+  const handleFieldSessionSave = (session: SoundscapeSession) => {
+      setSessions(prev => [session, ...prev]);
+      if (!projects.some(p => p.name === session.project)) {
+         const newProject: Project = {
+            name: session.project,
+            attachments: [],
+            owner: MOCK_CURRENT_USER,
+            members: [MOCK_CURRENT_USER],
+         };
+        setProjects(prev => [...prev, newProject]);
+      }
+      setSelectedSession(session);
+      setView('detail');
+  };
+
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) {
@@ -187,7 +206,7 @@ function App() {
     };
     setProjects(prev => [newProject, ...prev]);
     handleCloseNewProjectModal();
-    setSelectedProject(newProject.name); // Navigate to the new project
+    setSelectedProject(newProject.name);
   };
 
   const getFileType = (file: File): AttachedFile['type'] => {
@@ -196,7 +215,6 @@ function App() {
     return 'other';
   };
   
-  // Handlers for Session-level attachments
   const handleSessionFileUpload = (sessionId: string, file: File) => {
     const newAttachment: AttachedFile = {
       id: Date.now().toString(),
@@ -242,7 +260,6 @@ function App() {
     }
   };
 
-  // Handlers for Project-level attachments
   const handleProjectFileUpload = (projectName: string, file: File) => {
     const newAttachment: AttachedFile = {
       id: Date.now().toString(),
@@ -309,66 +326,100 @@ function App() {
 
 
   const renderDashboard = () => (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-4xl font-extrabold text-white">Soundscape Library</h1>
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className="relative flex-grow sm:flex-grow-0">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"/>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-8xl mx-auto">
+      <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+        <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                 </svg>
+             </div>
+            <h1 className="text-4xl font-extrabold text-white tracking-tight">Sound<span className="text-cyan-400">X</span>cape</h1>
+        </div>
+        
+        <div className="flex items-center gap-4 w-full md:w-auto flex-col sm:flex-row">
+          <button 
+            onClick={() => setView('library')}
+            className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-lg border border-slate-600 flex items-center gap-2 transition-colors"
+          >
+            <WaveformIcon className="w-5 h-5 text-cyan-400" />
+            <span>Pro Library</span>
+          </button>
+
+          <button 
+            onClick={() => setView('field')}
+            className="group bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-2.5 px-6 rounded-full shadow-lg shadow-cyan-500/25 flex items-center gap-2 transform transition-all hover:scale-105 w-full sm:w-auto justify-center border border-white/10"
+          >
+            <MicrophoneIcon className="w-5 h-5 group-hover:animate-pulse" />
+            <span>Launch X-Capture</span>
+          </button>
+
+          <div className="relative flex-grow sm:flex-grow-0 w-full sm:w-auto group">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors"/>
             <input 
               type="text" 
-              placeholder="Search soundscapes..."
+              placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 w-full sm:w-64"
+              className="bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-full py-2.5 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 w-full sm:w-72 transition-all"
             />
           </div>
-           <div className="flex items-center gap-3">
-              <img src={MOCK_CURRENT_USER.avatarUrl} alt={MOCK_CURRENT_USER.name} className="w-10 h-10 rounded-full border-2 border-slate-600"/>
-              <div>
-                  <p className="font-semibold text-white leading-tight">{MOCK_CURRENT_USER.name}</p>
-                  <p className="text-xs text-slate-400 leading-tight">Team Member</p>
+           <div className="flex items-center gap-3 w-full sm:w-auto justify-end pl-4 border-l border-slate-800/50">
+              <div className="text-right hidden sm:block">
+                  <p className="font-semibold text-white leading-tight text-sm">{MOCK_CURRENT_USER.name}</p>
+                  <p className="text-xs text-slate-400 leading-tight">Pro Member</p>
               </div>
+              <img src={MOCK_CURRENT_USER.avatarUrl} alt={MOCK_CURRENT_USER.name} className="w-10 h-10 rounded-full border-2 border-slate-700 shadow-sm"/>
           </div>
         </div>
       </header>
 
-      <nav className="mb-6">
-        <div className="flex border-b border-slate-700">
+      <nav className="mb-8">
+        <div className="flex gap-2 p-1 bg-slate-800/50 backdrop-blur-md rounded-xl inline-flex border border-slate-700/50">
           { (['projects', 'recents', 'map'] as DashboardTab[]).map(tab => (
             <button 
               key={tab}
               onClick={() => { setActiveTab(tab); setSelectedProject(null); }}
-              className={`px-4 py-3 text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === tab ? 'border-b-2 border-cyan-400 text-cyan-400' : 'text-slate-400 hover:text-white'}`}
+              className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                  activeTab === tab 
+                  ? 'bg-gradient-to-br from-slate-700 to-slate-600 text-white shadow-lg ring-1 ring-white/10' 
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
             >
-              {tab === 'projects' && <FolderIcon className="w-5 h-5" />}
-              {tab === 'recents' && <RewindIcon className="w-5 h-5" />}
-              {tab === 'map' && <MapIcon className="w-5 h-5" />}
+              {tab === 'projects' && <FolderIcon className={`w-5 h-5 ${activeTab === tab ? 'text-cyan-400' : ''}`} />}
+              {tab === 'recents' && <RewindIcon className={`w-5 h-5 ${activeTab === tab ? 'text-purple-400' : ''}`} />}
+              {tab === 'map' && <MapIcon className={`w-5 h-5 ${activeTab === tab ? 'text-green-400' : ''}`} />}
               <span className="capitalize">{tab}</span>
             </button>
           ))}
         </div>
       </nav>
 
-      <main className="animate-fade-in">
+      <main className="animate-fade-in pb-20 min-h-[60vh]">
         {activeTab === 'projects' && (
           <div>
             {selectedProject ? (() => {
                 const projectData = projects.find(p => p.name === selectedProject);
                 return (
-                  <div>
-                    <div className="flex justify-between items-center mb-6">
+                  <div className="animate-slide-up">
+                    <div className="flex justify-between items-center mb-8">
                         <div>
-                             <h2 className="text-3xl font-bold text-white">{selectedProject}</h2>
-                             <p className="text-slate-400">Owned by {projectData?.owner.name}</p>
+                             <div className="flex items-center gap-3 mb-1">
+                                <button onClick={() => setSelectedProject(null)} className="text-slate-400 hover:text-white transition-colors">
+                                    Projects 
+                                </button>
+                                <span className="text-slate-600">/</span>
+                                <h2 className="text-3xl font-bold text-white tracking-tight">{selectedProject}</h2>
+                             </div>
+                             <p className="text-slate-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span>
+                                Owned by {projectData?.owner.name}
+                             </p>
                         </div>
-                      <button onClick={() => setSelectedProject(null)} className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors duration-200">
-                        Back to All Projects
-                      </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                        <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+                        <div className="md:col-span-2 h-full">
                              {projectData && (
                                 <FileManager
                                 attachments={projectData.attachments}
@@ -377,23 +428,26 @@ function App() {
                                 />
                             )}
                         </div>
-                        <div>
+                        <div className="h-full">
                              {projectData && (
-                                <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 h-full">
-                                    <div className="flex justify-between items-center mb-3">
+                                <div className="glass-panel p-6 rounded-xl h-full">
+                                    <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                            <UsersIcon className="w-6 h-6"/>
-                                            Project Members
+                                            <UsersIcon className="w-5 h-5 text-cyan-400"/>
+                                            Team
                                         </h3>
-                                        <button className="text-xs bg-slate-700 hover:bg-slate-600 text-white font-semibold py-1 px-2 rounded-md transition-colors">Invite</button>
+                                        <button className="text-xs bg-slate-700/50 hover:bg-slate-600 text-white font-semibold py-1.5 px-3 rounded-md transition-colors border border-slate-600">Invite</button>
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="space-y-4">
                                         {projectData.members.map(member => (
-                                            <div key={member.id} className="flex items-center gap-3">
-                                                <img src={member.avatarUrl} alt={member.name} className="w-10 h-10 rounded-full"/>
+                                            <div key={member.id} className="flex items-center gap-3 group cursor-pointer p-2 rounded-lg hover:bg-slate-700/30 transition">
+                                                <div className="relative">
+                                                    <img src={member.avatarUrl} alt={member.name} className="w-10 h-10 rounded-full ring-2 ring-transparent group-hover:ring-cyan-500/50 transition-all"/>
+                                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-800 rounded-full"></span>
+                                                </div>
                                                 <div>
-                                                    <p className="font-semibold text-slate-200">{member.name}</p>
-                                                    <p className="text-xs text-slate-400">{member.id === projectData.owner.id ? 'Owner' : 'Member'}</p>
+                                                    <p className="font-semibold text-slate-200 group-hover:text-white transition-colors">{member.name}</p>
+                                                    <p className="text-xs text-slate-400">{member.id === projectData.owner.id ? 'Owner' : 'Editor'}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -403,14 +457,14 @@ function App() {
                         </div>
                     </div>
                     
-                    <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                    <div className="flex justify-between items-center mb-6">
                         <h3 className="text-2xl font-bold text-white">Soundscapes</h3>
                         <button 
                             onClick={() => handleNewSession(selectedProject)}
-                            className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center gap-2 transition-colors flex-shrink-0"
+                            className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold py-2 px-4 rounded-lg inline-flex items-center gap-2 transition-all border border-cyan-500/20 hover:border-cyan-500/50"
                         >
                             <PlusIcon className="w-5 h-5"/>
-                            <span className="hidden sm:inline">Add New Soundscape</span>
+                            <span className="hidden sm:inline">Add Soundscape</span>
                         </button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -421,13 +475,21 @@ function App() {
                           onSelect={handleSelectSession} 
                           onManageFiles={handleOpenFileManager}
                         />
-                      )) : <p className="text-slate-400 col-span-full py-8 text-center">No soundscapes in this project yet. Click 'Add New Soundscape' to get started.</p>}
+                      )) : (
+                          <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-700/50 rounded-xl bg-slate-800/20">
+                              <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                  <FolderIcon className="w-8 h-8 text-slate-600" />
+                              </div>
+                              <p className="text-slate-400">No soundscapes recorded yet.</p>
+                              <button onClick={() => handleNewSession(selectedProject)} className="text-cyan-400 font-bold mt-2 hover:underline">Create your first recording</button>
+                          </div>
+                      )}
                     </div>
                   </div>
                 )
               })()
              : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-slide-up">
                  {isLoading 
                     ? Array.from({ length: 5 }).map((_, i) => <ProjectCardSkeleton key={i} />)
                     : (
@@ -444,7 +506,7 @@ function App() {
           </div>
         )}
         {activeTab === 'recents' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-slide-up">
              {isLoading 
               ? Array.from({ length: 8 }).map((_, i) => <SessionCardSkeleton key={i} />)
               : recentSessions.length > 0 ? recentSessions.map(session => (
@@ -454,8 +516,17 @@ function App() {
           </div>
         )}
         {activeTab === 'map' && (
-            <div className="h-[calc(100vh-250px)] rounded-lg overflow-hidden border-2 border-slate-700">
-                <Map sessions={filteredSessions} onMarkerClick={handleSelectSessionFromMap}/>
+            <div className="h-[calc(100vh-240px)] rounded-xl overflow-hidden border border-slate-700 relative shadow-2xl animate-fade-in">
+                <Map sessions={filteredSessions} onMarkerClick={handleSelectSessionFromMap} showUserLocation={true} />
+                <div className="absolute bottom-8 right-8 z-[400]">
+                    <button 
+                    onClick={() => setView('field')}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full p-4 shadow-lg shadow-cyan-500/40 transition-all hover:scale-110 hover:rotate-3"
+                    title="Start Field Mode"
+                    >
+                        <MicrophoneIcon className="w-8 h-8" />
+                    </button>
+                </div>
             </div>
         )}
       </main>
@@ -468,7 +539,7 @@ function App() {
         return <LandingPage onEnter={handleEnter} />;
       case 'detail':
         return selectedSession && (
-          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             <SessionDetail 
               session={selectedSession} 
               onBack={handleBack} 
@@ -492,6 +563,37 @@ function App() {
             />
           </div>
         );
+      case 'field':
+        return (
+            <FieldMode 
+                onSaveSession={handleFieldSessionSave}
+                onCancel={() => setView('dashboard')}
+                currentUser={MOCK_CURRENT_USER}
+                projects={projectsWithCounts.map(p => p.name)}
+            />
+        );
+      case 'library':
+        return (
+           <div className="h-screen flex flex-col">
+               <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+                   <div className="flex items-center gap-3">
+                       <div className="p-2 bg-slate-800 rounded-lg">
+                         <WaveformIcon className="w-6 h-6 text-cyan-400" />
+                       </div>
+                       <div>
+                         <h2 className="text-xl font-bold text-white">Pro Library</h2>
+                         <p className="text-xs text-slate-400">Asset Management & Design</p>
+                       </div>
+                   </div>
+                   <button onClick={() => setView('dashboard')} className="text-slate-400 hover:text-white text-sm font-medium">
+                       Back to Dashboard
+                   </button>
+               </div>
+               <div className="flex-grow overflow-hidden">
+                   <LibraryMode />
+               </div>
+           </div>
+        );
       case 'dashboard':
       default:
         return renderDashboard();
@@ -499,7 +601,7 @@ function App() {
   };
 
   return (
-    <div className="bg-slate-900 min-h-screen text-white font-sans">
+    <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-screen text-slate-100 font-sans">
       {renderContent()}
 
       <Modal 
@@ -522,9 +624,9 @@ function App() {
         title="Create New Project"
       >
         <form onSubmit={handleCreateProject}>
-            <div className="space-y-4">
+            <div className="space-y-5">
                 <div>
-                    <label htmlFor="newProjectName" className="block text-sm font-medium text-slate-300 mb-1">
+                    <label htmlFor="newProjectName" className="block text-sm font-bold text-slate-300 mb-2">
                         Project Name
                     </label>
                     <input
@@ -532,17 +634,20 @@ function App() {
                         id="newProjectName"
                         value={newProjectName}
                         onChange={(e) => setNewProjectName(e.target.value)}
-                        className="w-full bg-slate-700 border border-slate-600 rounded-md p-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-                        placeholder="e.g., Coastal Recordings"
+                        className="w-full bg-slate-900/50 border border-slate-600 rounded-lg p-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                        placeholder="e.g., Coastal Recordings 2024"
                         autoFocus
                     />
-                     {newProjectError && <p className="text-red-400 text-sm mt-2">{newProjectError}</p>}
+                     {newProjectError && <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                        <span className="block w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                         {newProjectError}
+                     </p>}
                 </div>
-                 <div className="flex justify-end gap-4 pt-2">
-                    <button type="button" onClick={handleCloseNewProjectModal} className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                 <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+                    <button type="button" onClick={handleCloseNewProjectModal} className="text-slate-400 hover:text-white font-semibold py-2 px-4 rounded-lg transition-colors">
                         Cancel
                     </button>
-                    <button type="submit" className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    <button type="submit" className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-cyan-500/20 transition-all transform hover:scale-105">
                         Create Project
                     </button>
                 </div>

@@ -1,5 +1,9 @@
 {
-  "name": "Soundscape Gallery",
-  "description": "An immersive gallery of professional soundscapes and location imagery. Explore different environments through high-quality audio and visuals, featuring an advanced audio player with waveform visualization.",
-  "requestFramePermissions": []
+  "name": "SoundXcape",
+  "description": "The professional platform to eXperiment, eXplore, and eXport your audio universe. Advanced cloud library, AI-powered field recording, and sound design tools.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
 }

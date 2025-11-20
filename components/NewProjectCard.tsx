@@ -8,14 +8,15 @@ interface NewProjectCardProps {
 const NewProjectCard: React.FC<NewProjectCardProps> = ({ onClick }) => {
   return (
     <div
-      className="bg-slate-800 rounded-lg p-6 shadow-lg cursor-pointer group transform hover:-translate-y-2 transition-transform duration-300 ease-in-out flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-700 hover:border-cyan-500 hover:bg-slate-700"
+      className="glass-card h-48 rounded-xl p-6 cursor-pointer group flex flex-col items-center justify-center text-center border border-dashed border-slate-700 hover:border-cyan-500 hover:bg-cyan-900/10 transition-all duration-300 relative overflow-hidden"
       onClick={onClick}
-      style={{ minHeight: '188px' }}
     >
-      <div className="w-16 h-16 rounded-full bg-slate-700 group-hover:bg-cyan-500 flex items-center justify-center mb-4 transition-colors">
+       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-cyan-500 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] flex items-center justify-center mb-4 transition-all duration-300 z-10 relative group-hover:scale-110">
         <PlusIcon className="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" />
       </div>
-      <h3 className="text-xl font-bold text-white">Add New Project</h3>
+      <h3 className="text-lg font-bold text-slate-300 group-hover:text-white transition-colors z-10">Create New Project</h3>
     </div>
   );
 };
