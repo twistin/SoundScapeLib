@@ -94,6 +94,8 @@ const FileManager: React.FC<FileManagerProps> = ({ attachments, onFileUpload, on
         </button>
         <input
           type="file"
+          id="file-manager-upload"
+          name="file-manager-upload"
           ref={fileInputRef}
           onChange={handleFileChange}
           className="hidden"

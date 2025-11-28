@@ -194,8 +194,8 @@ export const ToneGeneratorModal: React.FC<ToneGeneratorProps> = ({ isOpen, onClo
             <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-bold text-slate-400 mb-2">Waveform</label>
-                        <select value={type} onChange={(e) => setType(e.target.value as any)} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
+                        <label htmlFor="tone-waveform" className="block text-sm font-bold text-slate-400 mb-2">Waveform</label>
+                        <select id="tone-waveform" name="tone-waveform" value={type} onChange={(e) => setType(e.target.value as any)} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
                             <option value="sine">Sine</option>
                             <option value="square">Square</option>
                             <option value="sawtooth">Sawtooth</option>
@@ -203,18 +203,18 @@ export const ToneGeneratorModal: React.FC<ToneGeneratorProps> = ({ isOpen, onClo
                         </select>
                     </div>
                     <div>
-                         <label className="block text-sm font-bold text-slate-400 mb-2">Duration (s)</label>
-                         <input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" min="0.1" max="60" />
+                         <label htmlFor="tone-duration" className="block text-sm font-bold text-slate-400 mb-2">Duration (s)</label>
+                         <input id="tone-duration" name="tone-duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" min="0.1" max="60" />
                     </div>
                 </div>
                 
                 {type !== 'noise' && (
                     <div>
                          <div className="flex justify-between mb-2">
-                             <label className="text-sm font-bold text-slate-400">Frequency</label>
+                             <label htmlFor="tone-frequency" className="text-sm font-bold text-slate-400">Frequency</label>
                              <span className="text-cyan-400 font-mono">{freq} Hz</span>
                          </div>
-                         <input type="range" min="20" max="20000" step="10" value={freq} onChange={(e) => setFreq(Number(e.target.value))} className="w-full accent-cyan-500 h-2 bg-slate-700 rounded-lg appearance-none" />
+                         <input id="tone-frequency" name="tone-frequency" type="range" min="20" max="20000" step="10" value={freq} onChange={(e) => setFreq(Number(e.target.value))} className="w-full accent-cyan-500 h-2 bg-slate-700 rounded-lg appearance-none" />
                     </div>
                 )}
 
@@ -276,8 +276,8 @@ export const WhooshCreatorModal: React.FC<WhooshCreatorProps> = ({ isOpen, onClo
                         </div>
                     </div>
                     <div>
-                         <label className="block text-sm font-bold text-slate-400 mb-2">Duration (s)</label>
-                         <input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" min="0.5" max="10" step="0.5"/>
+                        <label htmlFor="whoosh-duration" className="block text-sm font-bold text-slate-400 mb-2">Duration (s)</label>
+                        <input id="whoosh-duration" name="whoosh-duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" min="0.5" max="10" step="0.5"/>
                     </div>
                 </div>
                 

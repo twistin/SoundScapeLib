@@ -15,24 +15,29 @@ import { AudioFile, SoundscapeSession } from '../types';
 /**
  * Saves a new field recording session to Firestore.
  */
-export const saveSessionToDb = async (session: SoundscapeSession) => {
+export const saveSessionToDb = async (session: SoundscapeSession): Promise<SoundscapeSession> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
 
     // We use the 'library' collection for all audio assets to unify the Pro Library
     // Metadata will be updated by the Cloud Function later.
     const docRef = doc(collection(db, 'library')); 
     
-    const sessionData = {
+    const sessionData: SoundscapeSession = {
         ...session,
         id: docRef.id, // Use generated ID
-        userId: auth.currentUser.uid,
-        createdAt: Timestamp.now(),
         aiStatus: 'PENDING', // Set initial AI status
-        type: 'session'
     };
 
-    await setDoc(docRef, sessionData);
-    return docRef.id;
+    // We need to add fields that are not in SoundscapeSession for the DB query
+    const dataToSave = {
+        ...sessionData,
+        userId: auth.currentUser.uid,
+        createdAt: Timestamp.now(),
+        type: 'session'
+    }
+
+    await setDoc(docRef, dataToSave);
+    return sessionData; // Return the object with the new ID
 };
 
 /**

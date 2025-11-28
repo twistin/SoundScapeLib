@@ -115,8 +115,17 @@ function App() {
   
   const handleFormSubmit = (formData: SessionFormData) => {
     if (formInitialData) { // Editing existing session
-      const imageUrl = formData.imageUrl || (formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl);
-      const audioUrl = formData.audioUrl || (formData.audioFile ? URL.createObjectURL(formData.audioFile) : formData.audioUrl);
+      let imageUrl = formData.imageUrl || (formData.imageFile ? URL.createObjectURL(formData.imageFile) : formData.imageUrl);
+      let audioUrl = formData.audioUrl || (formData.audioFile ? URL.createObjectURL(formData.audioFile) : formData.audioUrl);
+
+      // Ensure local files get proper blob: URLs if upload failed or URL is missing scheme
+      if (formData.imageFile && imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('blob:')) {
+        imageUrl = URL.createObjectURL(formData.imageFile);
+      }
+      if (formData.audioFile && audioUrl && !audioUrl.startsWith('http') && !audioUrl.startsWith('blob:')) {
+        audioUrl = URL.createObjectURL(formData.audioFile);
+      }
+
       const updatedSession: SoundscapeSession = {
         ...formInitialData,
         title: formData.title,
@@ -138,8 +147,16 @@ function App() {
       setSelectedSession(updatedSession);
       setView('detail');
     } else { // Creating new session
-      const imageUrl = formData.imageUrl || (formData.imageFile ? URL.createObjectURL(formData.imageFile) : 'https://picsum.photos/seed/new/800/600');
-      const audioUrl = formData.audioUrl || (formData.audioFile ? URL.createObjectURL(formData.audioFile) : '');
+      let imageUrl = formData.imageUrl || (formData.imageFile ? URL.createObjectURL(formData.imageFile) : 'https://picsum.photos/seed/new/800/600');
+      let audioUrl = formData.audioUrl || (formData.audioFile ? URL.createObjectURL(formData.audioFile) : '');
+
+      if (formData.imageFile && imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('blob:')) {
+        imageUrl = URL.createObjectURL(formData.imageFile);
+      }
+      if (formData.audioFile && audioUrl && !audioUrl.startsWith('http') && !audioUrl.startsWith('blob:')) {
+        audioUrl = URL.createObjectURL(formData.audioFile);
+      }
+
       const newSession: SoundscapeSession = {
         id: new Date().getTime().toString(),
         title: formData.title,

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { WavAudioRecorder } from '../utils/wavEncoder';
 
 interface AudioRecorderProps {
   onRecordingComplete: (blob: Blob, duration: number) => void;
@@ -7,52 +8,31 @@ interface AudioRecorderProps {
 const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const wavRecorderRef = useRef<WavAudioRecorder | null>(null);
   const timerRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      const recorder = new WavAudioRecorder(stream);
+      wavRecorderRef.current = recorder;
+
       // Setup Audio Context for visualization
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      
-      audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
-      sourceRef.current = source;
+      const audioContext = recorder.getAudioContext();
+      const source = recorder.getAudioSource();
+      if (source) {
+        const analyser = audioContext.createAnalyser();
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+        analyserRef.current = analyser;
+      }
 
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        onRecordingComplete(blob, recordingTime);
-        
-        // Cleanup
-        stream.getTracks().forEach(track => track.stop());
-        if (audioContextRef.current) audioContextRef.current.close();
-        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      };
-
-      mediaRecorder.start();
+      recorder.start();
       setIsRecording(true);
       setRecordingTime(0);
       
@@ -69,10 +49,14 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) =>
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (wavRecorderRef.current && isRecording) {
+      wavRecorderRef.current.stop().then(blob => {
+        onRecordingComplete(blob, recordingTime);
+      });
+      
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     }
   };
 
@@ -87,7 +71,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) =>
     const dataArray = new Uint8Array(bufferLength);
 
     const draw = () => {
-      if (!isRecording) return;
+      // Stop drawing if we are no longer recording
+      if (!wavRecorderRef.current) {
+          if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+          return;
+      }
       
       animationFrameRef.current = requestAnimationFrame(draw);
       analyserRef.current!.getByteFrequencyData(dataArray);
@@ -121,6 +109,18 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete }) =>
 
     draw();
   };
+
+  useEffect(() => {
+    // Cleanup on unmount
+    return () => {
+      if (wavRecorderRef.current) {
+        // This is a bit abrupt, but necessary if component unmounts while recording
+        wavRecorderRef.current.stop();
+      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

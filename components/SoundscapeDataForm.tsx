@@ -55,6 +55,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [localAudioPreview, setLocalAudioPreview] = useState<string | null>(null);
+  const [localImagePreview, setLocalImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialDataFromAI) {
@@ -65,6 +67,29 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
       }));
     }
   }, [initialDataFromAI, defaultProject]);
+
+  // Keep local object URLs for immediate preview/playback even if upload fails.
+  useEffect(() => {
+    if (formData.audioFile) {
+      const url = URL.createObjectURL(formData.audioFile);
+      setLocalAudioPreview(url);
+      if (!formData.audioUrl || formData.audioUrl === formData.audioFile.name) {
+        setFormData(prev => ({ ...prev, audioUrl: url }));
+      }
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [formData.audioFile]);
+
+  useEffect(() => {
+    if (formData.imageFile) {
+      const url = URL.createObjectURL(formData.imageFile);
+      setLocalImagePreview(url);
+      if (!formData.imageUrl || formData.imageUrl === formData.imageFile.name) {
+        setFormData(prev => ({ ...prev, imageUrl: url }));
+      }
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [formData.imageFile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +111,7 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
         } catch (err) {
           console.warn('Audio upload failed, using local preview URL', err);
           if (!audioUrl) {
-            audioUrl = URL.createObjectURL(formData.audioFile);
+            audioUrl = localAudioPreview || URL.createObjectURL(formData.audioFile);
           }
           setSubmitError('No se pudo subir el audio a Storage; se usará la URL local.');
         }
@@ -103,7 +128,7 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
         } catch (err) {
           console.warn('Image upload failed, using local preview URL', err);
           if (!imageUrl) {
-            imageUrl = URL.createObjectURL(formData.imageFile);
+            imageUrl = localImagePreview || URL.createObjectURL(formData.imageFile);
           }
           setSubmitError('No se pudo subir la imagen a Storage; se usará la URL local.');
         }
@@ -150,6 +175,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="text"
+              name="title"
+              id="title"
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -164,6 +191,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="text"
+              name="author"
+              id="author"
               value={formData.author}
               onChange={(e) => handleChange('author', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -179,6 +208,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             📁 Proyecto
           </label>
           <select
+            name="project"
+            id="project"
             value={formData.project}
             onChange={(e) => handleChange('project', e.target.value)}
             className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -199,6 +230,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             📖 Descripción
           </label>
           <textarea
+            name="description"
+            id="description"
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
             rows={4}
@@ -216,6 +249,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="text"
+              name="locationName"
+              id="locationName"
               value={formData.locationName}
               onChange={(e) => handleChange('locationName', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -231,6 +266,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             <input
               type="number"
               step="any"
+              name="locationLat"
+              id="locationLat"
               value={formData.locationLat || ''}
               onChange={(e) => handleChange('locationLat', parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -245,6 +282,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             <input
               type="number"
               step="any"
+              name="locationLng"
+              id="locationLng"
               value={formData.locationLng || ''}
               onChange={(e) => handleChange('locationLng', parseFloat(e.target.value) || 0)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -259,12 +298,14 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             <label className="block text-sm font-medium text-gray-300 mb-2">
               🎵 Tipo de Sonido
             </label>
-            <select
-              value={formData.soundType}
-              onChange={(e) => handleChange('soundType', e.target.value)}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
+          <select
+            name="soundType"
+            id="soundType"
+            value={formData.soundType}
+            onChange={(e) => handleChange('soundType', e.target.value)}
+            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
               <option value="">Seleccionar tipo</option>
               <option value="Forest">🌲 Bosque</option>
               <option value="Urban">🏙️ Urbano</option>
@@ -280,6 +321,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="text"
+              name="equipment"
+              id="equipment"
               value={formData.equipment}
               onChange={(e) => handleChange('equipment', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -296,6 +339,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="text"
+              name="audioUrl"
+              id="audioUrl"
               value={formData.audioUrl}
               onChange={(e) => handleChange('audioUrl', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -309,6 +354,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="text"
+              name="imageUrl"
+              id="imageUrl"
               value={formData.imageUrl}
               onChange={(e) => handleChange('imageUrl', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -322,6 +369,8 @@ const SoundscapeDataForm: React.FC<SoundscapeDataFormProps> = ({
             </label>
             <input
               type="date"
+              name="date"
+              id="date"
               value={formData.date}
               onChange={(e) => handleChange('date', e.target.value)}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"

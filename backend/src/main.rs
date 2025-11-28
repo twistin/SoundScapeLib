@@ -33,27 +33,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         // Configure CORS
         let cors = Cors::default()
-            .allowed_origin_fn(|origin, _req_head| {
-                // Allow localhost and netlify domains for development and production
-                let origin_str = origin.as_bytes();
-                let origin_str = std::str::from_utf8(origin_str).unwrap_or("");
-
-                origin_str.starts_with("http://localhost")
-                    || origin_str.starts_with("https://localhost")
-                    || origin_str.ends_with(".netlify.app")
-                    || origin_str.ends_with(".netlify.com")
-                    || origin_str == "https://soundscapelib.netlify.app"
-            })
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-            .allowed_headers(vec![
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers",
-            ])
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
             .supports_credentials()
             .max_age(3600);
 
